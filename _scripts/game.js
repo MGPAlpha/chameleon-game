@@ -1,5 +1,25 @@
 var svgNS = "http://www.w3.org/2000/svg";
 
+// Prepare marching squares
+var marchingSquaresPathStrings = [
+    "",
+    "0,0 5,0 0,5",
+    "5,0 10,0 10,5",
+    "0,0 10,0 10,5 0,5",
+    "10,5 10,10 5,10",
+    "0,0 5,0 10,5 10,10 5,10 0,5",
+    "5,0 10,0 10,10 5,10",
+    "0,0 10,0 10,10 5,10 0,5",
+    "0,5 5,10 0,10",
+    "0,0 5,0 5,10 0,10",
+    "5,0 10,0 10,5 5,10 0,10 0,5",
+    "0,0 10,0 10,5 5,10 0,10",
+    "0,5 10,5 10,10 0,10",
+    "0,0 5,0 10,5 10,10 0,10",
+    "5,0 10,0 10,10 0,10 0,5",
+    "0,0 10,0 10,10 0,10"
+];
+
 // DOM References
 var leftBox;
 var rightBox;
@@ -36,11 +56,14 @@ class Grid {
             this.cells[i] = [];
             this.cells[this.height - i - 1] = [];
             for (var j = 0; j < width; j++) {
-                var value = i == 0 || j == 0 || i == height - 1 || j == width - 1 || rand() > .6 ? 1 : 0;
+                var value = (i == 0 || j == 0 || i == height - 1 || j == width - 1 || rand() > .6) ? 1 : 0;
                 this.cells[i][j] = new Cell(j, i, value, this);
                 this.cells[height - i - 1][width - j - 1] = new Cell(width - j - 1, height - i - 1, value, this);
             }
         }
+        for (var i = 0; i < 5; i++) this.update();
+        this.clearCenter();
+        this.buildPaths();
     }
     
     update() {
@@ -56,8 +79,66 @@ class Grid {
         }
     }
     
+    clearCenter() {
+        var quarterCircleTemplate = [
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 0],
+            [1, 1, 0, 0]
+        ];
+        var centerX = Math.floor(this.width / 2);
+        var centerY = Math.floor(this.height / 2);
+        for (var i = 0; i < quarterCircleTemplate.length; i++) {
+            for (var j = 0; j < quarterCircleTemplate[0].length; j++) {
+                if (quarterCircleTemplate[i][j] == 0) continue;
+                var targetX = centerX + j;
+                var targetY = centerY + i;
+                this.cells[targetY][targetX].value = 0;
+                this.cells[targetY][this.width - targetX - 1].value = 0;
+                this.cells[this.height - targetY - 1][targetX].value = 0;
+                this.cells[this.height - targetY - 1][this.width - targetX - 1].value = 0;
+            }
+        }
+    }
+    
+    buildPaths() {
+        var visitedCells = new Set();
+        var distanceCompartor = function(a, b) {
+            return b.x - a.x;
+        }
+        var finished = false;
+        var firstCheck = this.cells[Math.floor(this.height / 2)][Math.floor(this.width / 2)];
+        do {
+            // Find best spot to tunnel
+            var toCheck = new PriorityQueue({comparator: (a,b) => distanceCompartor(a, b)});
+            toCheck.queue(firstCheck);
+            var closest = firstCheck;
+            while (toCheck.length != 0) {
+                var curr = toCheck.dequeue();
+                if (visitedCells.has(curr)) continue;
+                visitedCells.add(curr);
+                if (curr.x > closest.x) closest = curr;
+                [[0,1],[1,0],[0,-1],[-1,0]].forEach((item, index) => {
+                    var x = curr.x + item[0];
+                    var y = curr.y + item[1];
+                    if (x > -1 && x < this.width
+                               && y > -1 && y < this.height
+                               && !visitedCells.has(this.cells[y][x]) && this.cells[y][x].value == 0) {
+                        toCheck.queue(this.cells[y][x]);
+                    }
+                });
+            }
+            
+            // Generate tunnel
+            var visitedToTunnel = new Set();
+            
+            
+            finished = true;
+        } while (!finished);
+    }
+    
     cellValueAt(x, y) {
-        return x > -1 && x < this.width && y > -1 && y < this.height ? this.cells[y][x].value : 1;
+        return x > -1 && x < this.width && y > -1 && y < this.height ? this.cells[y][x].value : 0;
     }
 }
 
@@ -77,7 +158,7 @@ class Cell {
                 if (this.container.cellValueAt(this.x + j, this.y + i) == 1) neighbors++;
             }
         }
-        if (neighbors < 4) this.preparedValue = 0;
+        if (this.x != 0 && this.x != this.container.width - 1 && this.y != 0 && this.y != this.container.height - 1 && neighbors < 4) this.preparedValue = 0;
         if (neighbors >= 5) this.preparedValue = 1;
     }
     
@@ -107,26 +188,6 @@ function setupRender(grid) {
     groundTexture.setAttribute("height", "100");
     wallPattern.appendChild(groundTexture);
     defs.appendChild(wallPattern);
-    
-    // Prepare marching squares
-    var marchingSquaresPathStrings = [
-        "",
-        "0,0 5,0 0,5",
-        "5,0 10,0 10,5",
-        "0,0 10,0 10,5 0,5",
-        "10,5 10,10 5,10",
-        "0,0 5,0 10,5 10,10 5,10 0,5",
-        "5,0 10,0 10,10 5,10",
-        "0,0 10,0 10,10 5,10 0,5",
-        "0,5 5,10 0,10",
-        "0,0 5,0 5,10 0,10",
-        "5,0 10,0 10,5 5,10 0,10 0,5",
-        "0,0 10,0 10,5 5,10 0,10",
-        "0,5 10,5 10,10 0,10",
-        "0,0 5,0 10,5 10,10 0,10",
-        "5,0 10,0 10,10 0,10 0,5",
-        "0,0 10,0 10,10 0,10"
-    ];
     
     // Generate defs for marching squares
     for (var i = 1; i < marchingSquaresPathStrings.length; i++) {
@@ -174,9 +235,5 @@ window.addEventListener('load', (e) => {
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     var grid = new Grid(30, 40, Math.random());
-    setupRender(grid);
-    for (var i = 0; i < 5; i++) {
-        grid.update();
-    }
     setupRender(grid);
 });

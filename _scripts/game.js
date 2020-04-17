@@ -1,24 +1,6 @@
 var svgNS = "http://www.w3.org/2000/svg";
 
-// Prepare marching squares
-var marchingSquaresPathStrings = [
-    "",
-    "0,0 5,0 0,5",
-    "5,0 10,0 10,5",
-    "0,0 10,0 10,5 0,5",
-    "10,5 10,10 5,10",
-    "0,0 5,0 10,5 10,10 5,10 0,5",
-    "5,0 10,0 10,10 5,10",
-    "0,0 10,0 10,10 5,10 0,5",
-    "0,5 5,10 0,10",
-    "0,0 5,0 5,10 0,10",
-    "5,0 10,0 10,5 5,10 0,10 0,5",
-    "0,0 10,0 10,5 5,10 0,10",
-    "0,5 10,5 10,10 0,10",
-    "0,0 5,0 10,5 10,10 0,10",
-    "5,0 10,0 10,10 0,10 0,5",
-    "0,0 10,0 10,10 0,10"
-];
+var cameraZoom = 4;
 
 // DOM References
 var leftBox;
@@ -213,66 +195,109 @@ class Cell {
     }
 }
 
-function setupRender(grid) {
-    // Clear SVG
-    display.innerHTML = "";
+class Renderer {
     
-    // Set up definitions
-    var defs = document.createElementNS(svgNS, "defs");
+    constructor(grid) {
     
-    // Prepare patterns
-    var wallPattern = document.createElementNS(svgNS, "pattern");
-    wallPattern.setAttribute("id", "wall-pattern");
-    wallPattern.setAttribute("x", "0");
-    wallPattern.setAttribute("y", "0");
-    wallPattern.setAttribute("width", "100");
-    wallPattern.setAttribute("height", "100");
-    wallPattern.setAttribute("patternUnits", "userSpaceOnUse");
-    var groundTexture = document.createElementNS(svgNS, "image");
-    groundTexture.setAttribute("href", "_assets/wall.png");
-    groundTexture.setAttribute("width", "100");
-    groundTexture.setAttribute("height", "100");
-    wallPattern.appendChild(groundTexture);
-    defs.appendChild(wallPattern);
-    
-    // Generate defs for marching squares
-    for (var i = 1; i < marchingSquaresPathStrings.length; i++) {
-        var path = document.createElementNS(svgNS, "polygon");
-        path.setAttribute("fill", "white");
-        path.setAttribute("id", "marching-square-" + i);
-        path.setAttribute("points", marchingSquaresPathStrings[i]);
-        defs.appendChild(path);
+        this.standardZoom = 4;
+        this.cellWidth = 10;
+        
+        this.marchingSquaresPathStrings = [
+            [],
+            [[0,0], [.5,0], [0,.5]],
+            [[.5,0], [1,0], [1,.5]],
+            [[0,0], [1,0], [1,.5], [0,.5]],
+            [[1,.5], [1,1], [.5,1]],
+            [[0,0], [.5,0], [1,.5], [1,1], [.5,1], [0,.5]],
+            [[.5,0], [1,0], [1,1], [.5,1]],
+            [[0,0], [1,0], [1,1], [.5,1], [0,.5]],
+            [[0,.5], [.5,1], [0,1]],
+            [[0,0], [.5,0], [.5,1], [0,1]],
+            [[.5,0], [1,0], [1,.5], [.5,1], [0,1], [0,.5]],
+            [[0,0], [1,0], [1,.5], [.5,1], [0,1]],
+            [[0,.5], [1,.5], [1,1], [0,1]],
+            [[0,0], [.5,0], [1,.5], [1,1], [0,1]],
+            [[.5,0], [1,0], [1,1], [0,1], [0,.5]],
+            [[0,0], [1,0], [1,1], [0,1]]
+        ].map(o => o.map(b => b.map(j => this.cellWidth * j)));
+        
+        console.log(this.marchingSquaresPathStrings);
+        
+        this.grid = grid;
+
     }
     
-    var wallGroup = document.createElementNS(svgNS, "g");
-    wallGroup.setAttribute("id", "wall-group");
-    for (var i = -1; i < grid.height; i++) {
-        for (var j = -1; j < grid.width; j++) {
-            var value = 1 * grid.cellValueAt(j, i)
-                      + 2 * grid.cellValueAt(j+1, i)
-                      + 4 * grid.cellValueAt(j+1, i+1)
-                      + 8 * grid.cellValueAt(j, i+1);
-            if (value == 0) continue;
-            var square = document.createElementNS(svgNS, "use");
-            square.setAttribute("href", "#marching-square-" + value);
-            square.setAttribute("x", j * 10 + 5);
-            square.setAttribute("y", i * 10 + 5);
-            wallGroup.appendChild(square);
+        
+    setupRender() {
+        var grid = this.grid;
+        var marchingSquaresPathStrings = this.marchingSquaresPathStrings;
+        
+        // Clear SVG
+        display.innerHTML = "";
+
+        // Set up definitions
+        var defs = document.createElementNS(svgNS, "defs");
+
+        // Prepare patterns
+        var wallPattern = document.createElementNS(svgNS, "pattern");
+        wallPattern.setAttribute("id", "wall-pattern");
+        wallPattern.setAttribute("x", "0");
+        wallPattern.setAttribute("y", "0");
+        wallPattern.setAttribute("width", "100");
+        wallPattern.setAttribute("height", "100");
+        wallPattern.setAttribute("patternUnits", "userSpaceOnUse");
+        var groundTexture = document.createElementNS(svgNS, "image");
+        groundTexture.setAttribute("href", "_assets/wall.png");
+        groundTexture.setAttribute("width", "100");
+        groundTexture.setAttribute("height", "100");
+        wallPattern.appendChild(groundTexture);
+        defs.appendChild(wallPattern);
+
+        // Generate defs for marching squares
+        for (var i = 1; i < marchingSquaresPathStrings.length; i++) {
+            var path = document.createElementNS(svgNS, "polygon");
+            path.setAttribute("fill", "white");
+            path.setAttribute("id", "marching-square-" + i);
+            path.setAttribute("points", marchingSquaresPathStrings[i]);
+            defs.appendChild(path);
         }
+
+        var wallGroup = document.createElementNS(svgNS, "g");
+        wallGroup.setAttribute("id", "wall-group");
+        for (var i = -1; i < grid.height; i++) {
+            for (var j = -1; j < grid.width; j++) {
+                var value = 1 * grid.cellValueAt(j, i)
+                          + 2 * grid.cellValueAt(j+1, i)
+                          + 4 * grid.cellValueAt(j+1, i+1)
+                          + 8 * grid.cellValueAt(j, i+1);
+                if (value == 0) continue;
+                var square = document.createElementNS(svgNS, "use");
+                square.setAttribute("href", "#marching-square-" + value);
+                square.setAttribute("x", (j + .5) * this.cellWidth);
+                square.setAttribute("y", (i + .5) * this.cellWidth);
+                wallGroup.appendChild(square);
+            }
+        }
+        var wallMask = document.createElementNS(svgNS, "mask");
+        wallMask.setAttribute("id", "wall-mask");
+        wallMask.appendChild(wallGroup);
+        display.appendChild(wallMask);
+        display.appendChild(defs);
+        var wall = document.createElementNS(svgNS, "rect");
+        wall.setAttribute("x", 0);
+        wall.setAttribute("y", 0);
+        wall.setAttribute("width", grid.width * 10);
+        wall.setAttribute("height", grid.height * 10);
+        wall.setAttribute("mask", "url(#wall-mask)");
+        wall.setAttribute("fill", "url(#wall-pattern)");
+        this.wall = wall;
+        this.setCamera(grid.width / 2, grid.height / 2);
+        display.appendChild(wall);
     }
-    var wallMask = document.createElementNS(svgNS, "mask");
-    wallMask.setAttribute("id", "wall-mask");
-    wallMask.appendChild(wallGroup);
-    display.appendChild(wallMask);
-    display.appendChild(defs);
-    var ground = document.createElementNS(svgNS, "rect");
-    ground.setAttribute("x", 0);
-    ground.setAttribute("y", 0);
-    ground.setAttribute("width", grid.width * 10);
-    ground.setAttribute("height", grid.height * 10);
-    ground.setAttribute("mask", "url(#wall-mask)");
-    ground.setAttribute("fill", "url(#wall-pattern)");
-    display.appendChild(ground);
+    
+    setCamera(x, y) {
+        this.wall.setAttribute("transform", `translate(${-this.cellWidth * x * cameraZoom + 200}, ${-this.cellWidth * y * cameraZoom + 150}) scale(${cameraZoom})`);
+    }
 }
 
 window.addEventListener('load', (e) => {
@@ -281,5 +306,6 @@ window.addEventListener('load', (e) => {
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     var grid = new Grid(30, 40, Math.random());
-    setupRender(grid);
+    render = new Renderer(grid);
+    render.setupRender();
 });

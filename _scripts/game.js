@@ -56,7 +56,7 @@ class Grid {
             this.cells[i] = [];
             this.cells[this.height - i - 1] = [];
             for (var j = 0; j < width; j++) {
-                var value = (i == 0 || j == 0 || i == height - 1 || j == width - 1 || rand() > .6) ? 1 : 0;
+                var value = (i == 0 || j == 0 || i == height - 1 || j == width - 1 || rand() > .55) ? 1 : 0;
                 this.cells[i][j] = new Cell(j, i, value, this);
                 this.cells[height - i - 1][width - j - 1] = new Cell(width - j - 1, height - i - 1, value, this);
             }
@@ -129,11 +129,57 @@ class Grid {
                 });
             }
             
-            // Generate tunnel
+            // Generate tunnel path
             var visitedToTunnel = new Set();
+            var tunnelQueue = new PriorityQueue({comparator: (a, b) => {
+                var aDist = Math.abs(a.x - closest.x) + Math.abs(a.y - closest.y);
+                var bDist = Math.abs(b.x - closest.x) + Math.abs(b.y - closest.y);
+                return aDist - bDist;
+            }});
+            tunnelQueue.queue(this.cells[closest.y][closest.x + 1]);
+            var chosenToTunnel = undefined;
+            while (chosenToTunnel == undefined) {
+                var currTunnelTarget = tunnelQueue.dequeue();
+                if (visitedToTunnel.has(currTunnelTarget)) continue;
+                visitedToTunnel.add(currTunnelTarget);
+                [[0,1],[1,0],[0,-1]].forEach((item) => {
+                    var x = currTunnelTarget.x + item[0];
+                    var y = currTunnelTarget.y + item[1];
+                    if (y < 0 || y >= this.height) return;
+                    if (x == this.width) {
+                        chosenToTunnel = currTunnelTarget;
+                        finished = true;
+                        return;
+                    }
+                    var checkingForTunnel = this.cells[y][x];
+                    if (visitedToTunnel.has(checkingForTunnel)) return;
+                    if (checkingForTunnel.value == 0) {
+                        chosenToTunnel = currTunnelTarget;
+                        firstCheck = currTunnelTarget
+                        return;
+                    }
+                    tunnelQueue.queue(checkingForTunnel);
+                });
+            }
             
+            // Dig tunnel
+            for (var i = closest.x + 1; i < chosenToTunnel.x; i++) {
+                var curr = this.cells[closest.y][i];
+                curr.value = 0;
+                visitedCells.add(curr);
+                curr = this.cells[this.height - closest.y - 1][this.width - i - 1];
+                curr.value = 0;
+                visitedCells.add(curr);
+            }
+            for (var i = (closest.y < chosenToTunnel.y) ? closest.y : chosenToTunnel.y; i <= (closest.y < chosenToTunnel.y ? chosenToTunnel.y : closest.y); i++) {
+                var curr = this.cells[i][chosenToTunnel.x];
+                curr.value = 0;
+                visitedCells.add(curr);
+                curr = this.cells[this.height - i - 1][this.width - chosenToTunnel.x - 1];
+                curr.value = 0;
+                visitedCells.add(curr);
+            }
             
-            finished = true;
         } while (!finished);
     }
     

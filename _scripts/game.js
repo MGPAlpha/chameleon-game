@@ -1,11 +1,104 @@
-var svgNS = "http://www.w3.org/2000/svg";
+const svgNS = "http://www.w3.org/2000/svg";
 
-var cameraZoom = 4;
+const marchingSquaresPaths = [
+    [],
+    [[0,0], [.5,0], [0,.5]],
+    [[.5,0], [1,0], [1,.5]],
+    [[0,0], [1,0], [1,.5], [0,.5]],
+    [[1,.5], [1,1], [.5,1]],
+    [[0,0], [.5,0], [1,.5], [1,1], [.5,1], [0,.5]],
+    [[.5,0], [1,0], [1,1], [.5,1]],
+    [[0,0], [1,0], [1,1], [.5,1], [0,.5]],
+    [[0,.5], [.5,1], [0,1]],
+    [[0,0], [.5,0], [.5,1], [0,1]],
+    [[.5,0], [1,0], [1,.5], [.5,1], [0,1], [0,.5]],
+    [[0,0], [1,0], [1,.5], [.5,1], [0,1]],
+    [[0,.5], [1,.5], [1,1], [0,1]],
+    [[0,0], [.5,0], [1,.5], [1,1], [0,1]],
+    [[.5,0], [1,0], [1,1], [0,1], [0,.5]],
+    [[0,0], [1,0], [1,1], [0,1]]
+];
 
 // DOM References
 var leftBox;
 var rightBox;
 var display;
+
+var controller = {
+    up1: 0,
+    right1: 0,
+    down1: 0,
+    left1: 0,
+    
+    up2: 0,
+    right2: 0,
+    down2: 0,
+    left2: 0
+}
+
+function setupControls() {
+    document.addEventListener('keydown', (e) => {
+        switch (e.keyCode) {
+            // Player 1
+            case 65:
+                controller.left1 = 1;
+                break;
+            case 68:
+                controller.right1 = 1;
+                break;
+            case 83:
+                controller.down1 = 1;
+                break;
+            case 87:
+                controller.up1 = 1;
+                
+            // Player 2
+            case 37:
+                controller.left2 = 1;
+                break;
+            case 38:
+               controller.up2 = 1;
+                break;
+            case 39:
+                controller.right2 = 1;
+                break;
+            case 40:
+                controller.down2 = 1;
+                break;
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        switch (e.keyCode) {
+            // Player 1
+            case 65:
+                controller.left1 = 0;
+                break;
+            case 68:
+                controller.right1 = 0;
+                break;
+            case 83:
+                controller.down1 = 0;
+                break;
+            case 87:
+                controller.up1 = 0;
+                
+            // Player 2
+            case 37:
+                controller.left2 = 0;
+                break;
+            case 38:
+               controller.up2 = 0;
+                break;
+            case 39:
+                controller.right2 = 0;
+                break;
+            case 40:
+                controller.down2 = 0;
+                break;
+        }
+    });
+}
 
 // Give string a hashCode() function
 // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
@@ -202,26 +295,7 @@ class Renderer {
         this.standardZoom = 4;
         this.cellWidth = 10;
         
-        this.marchingSquaresPathStrings = [
-            [],
-            [[0,0], [.5,0], [0,.5]],
-            [[.5,0], [1,0], [1,.5]],
-            [[0,0], [1,0], [1,.5], [0,.5]],
-            [[1,.5], [1,1], [.5,1]],
-            [[0,0], [.5,0], [1,.5], [1,1], [.5,1], [0,.5]],
-            [[.5,0], [1,0], [1,1], [.5,1]],
-            [[0,0], [1,0], [1,1], [.5,1], [0,.5]],
-            [[0,.5], [.5,1], [0,1]],
-            [[0,0], [.5,0], [.5,1], [0,1]],
-            [[.5,0], [1,0], [1,.5], [.5,1], [0,1], [0,.5]],
-            [[0,0], [1,0], [1,.5], [.5,1], [0,1]],
-            [[0,.5], [1,.5], [1,1], [0,1]],
-            [[0,0], [.5,0], [1,.5], [1,1], [0,1]],
-            [[.5,0], [1,0], [1,1], [0,1], [0,.5]],
-            [[0,0], [1,0], [1,1], [0,1]]
-        ].map(o => o.map(b => b.map(j => this.cellWidth * j)));
-        
-        console.log(this.marchingSquaresPathStrings);
+        this.marchingSquaresPathStrings = marchingSquaresPaths.map(o => o.map(b => b.map(j => this.cellWidth * j)));
         
         this.grid = grid;
 
@@ -293,19 +367,89 @@ class Renderer {
         this.wall = wall;
         this.setCamera(grid.width / 2, grid.height / 2);
         display.appendChild(wall);
+        
+        // Create player sprite
+        var playerSprite = document.createElementNS(svgNS, "circle");
+        playerSprite.setAttribute("cx", 200);
+        playerSprite.setAttribute("cy", 150);
+        playerSprite.setAttribute("r", this.standardZoom * this.cellWidth / 4);
+        playerSprite.setAttribute("fill", "black");
+        display.appendChild(playerSprite);
+        this.playerSprite = playerSprite;
     }
     
     setCamera(x, y) {
-        this.wall.setAttribute("transform", `translate(${-this.cellWidth * x * cameraZoom + 200}, ${-this.cellWidth * y * cameraZoom + 150}) scale(${cameraZoom})`);
+        this.wall.setAttribute("transform", `translate(${-this.cellWidth * x * this.standardZoom + 200}, ${-this.cellWidth * y * this.standardZoom + 150}) scale(${this.standardZoom})`);
     }
 }
 
-window.addEventListener('load', (e) => {
+class Game {
+    constructor(seed) {
+        
+        //Constants
+        this.tileSize = 100;
+        this.playerSize = 25;
+        this.mapWidth = 80;
+        this.mapHeight = 60;
+        
+        this.seed = seed;
+        this.grid = new Grid(this.mapHeight, this.mapWidth, seed);
+        this.renderer = new Renderer(this.grid);
+        this.renderer.setupRender();
+        
+        // Set up engine
+        this.engine = Matter.Engine.create();
+        this.world = this.engine.world;
+        this.world.gravity.scale = 0;
+        
+        var grid = this.grid;
+        
+        var vertexSets = marchingSquaresPaths.map(o => o.map(b => {
+            return {x: b[0] * this.tileSize, y: b[1] * this.tileSize};
+        }));
+        
+        for (var i = -1; i < grid.height; i++) {
+            for (var j = -1; j < grid.width; j++) {
+                var value = 1 * grid.cellValueAt(j, i)
+                          + 2 * grid.cellValueAt(j+1, i)
+                          + 4 * grid.cellValueAt(j+1, i+1)
+                          + 8 * grid.cellValueAt(j, i+1);
+                if (value == 0) continue;
+                var verts = Matter.Vertices.create(vertexSets[value]);
+                var vertsAvg = Matter.Vertices.centre(verts);
+                var wall = Matter.Bodies.fromVertices((j + .5) * this.tileSize, (i + .5) * this.tileSize, verts, {
+                    isStatic: true
+                }, false);
+                Matter.World.add(this.world, wall);
+                Matter.Body.translate(wall, vertsAvg);
+            }
+        }
+        
+        this.player = Matter.Bodies.circle(this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2, 25);
+        Matter.World.add(this.world, this.player);
+        Matter.Engine.run(this.engine);
+    }
+    
+    update() {
+        this.renderer.setCamera(this.player.position.x / this.tileSize, this.player.position.y / this.tileSize);
+        Matter.Body.applyForce(this.player, this.player.position, {x: (controller.right1 - controller.left1) / 100, y: (controller.down1 - controller.up1) / 100});
+    }
+    
+    start() {
+        this.updater = setInterval(() => {
+            this.update();
+        }, 1000 / 30);
+    }
+}
+
+window.addEventListener('load', () => {
     // Set up DOM references
     leftBox = document.getElementById("left-box");
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
-    var grid = new Grid(30, 40, Math.random());
-    render = new Renderer(grid);
-    render.setupRender();
+    
+    setupControls();
+    
+    var currGame = new Game(Math.random());
+    currGame.start();
 });

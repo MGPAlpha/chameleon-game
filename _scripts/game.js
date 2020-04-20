@@ -19,6 +19,10 @@ const marchingSquaresPaths = [
     [[0,0], [1,0], [1,1], [0,1]]
 ];
 
+const playerBodyPath = [
+    [0,-.5], [.25,-.25], [.25,.25], [0,.5], [-.25,.25], [-.25,-.25]
+];
+
 // DOM References
 var leftBox;
 var rightBox;
@@ -98,6 +102,13 @@ function setupControls() {
                 break;
         }
     });
+}
+
+function rotateVector(vector, angle) {
+    return {
+        x: vector.x * Math.cos(angle) + vector.y * -Math.sin(angle),
+        y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle)
+    }
 }
 
 // Give string a hashCode() function
@@ -368,11 +379,11 @@ class Renderer {
         this.setCamera(grid.width / 2, grid.height / 2);
         display.appendChild(wall);
         
+        var tempPlayerSpritePath = playerBodyPath.map(o => o.map(b => b * this.cellWidth));
         // Create player sprite
-        var playerSprite = document.createElementNS(svgNS, "circle");
-        playerSprite.setAttribute("cx", 200);
-        playerSprite.setAttribute("cy", 150);
-        playerSprite.setAttribute("r", this.standardZoom * this.cellWidth / 4);
+        var playerSprite = document.createElementNS(svgNS, "polygon");
+        playerSprite.setAttribute("transform", `translate(200, 150) scale(${this.standardZoom})`);
+        playerSprite.setAttribute("points", tempPlayerSpritePath);
         playerSprite.setAttribute("fill", "black");
         display.appendChild(playerSprite);
         this.playerSprite = playerSprite;
@@ -380,6 +391,10 @@ class Renderer {
     
     setCamera(x, y) {
         this.wall.setAttribute("transform", `translate(${-this.cellWidth * x * this.standardZoom + 200}, ${-this.cellWidth * y * this.standardZoom + 150}) scale(${this.standardZoom})`);
+    }
+    
+    updatePlayerSprite(angle) {
+        this.playerSprite.setAttribute("transform", `translate(200, 150) scale(${this.standardZoom}) rotate(${angle})`);
     }
 }
 
@@ -418,21 +433,70 @@ class Game {
                 var verts = Matter.Vertices.create(vertexSets[value]);
                 var vertsAvg = Matter.Vertices.centre(verts);
                 var wall = Matter.Bodies.fromVertices((j + .5) * this.tileSize, (i + .5) * this.tileSize, verts, {
-                    isStatic: true
+                    isStatic: true,
+                    friction: 0,
+                    frictionStatic: 0
                 }, false);
                 Matter.World.add(this.world, wall);
                 Matter.Body.translate(wall, vertsAvg);
             }
         }
         
-        this.player = Matter.Bodies.circle(this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2, 25);
+        this.player = Matter.Bodies.fromVertices(this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2, Matter.Vertices.create(playerBodyPath.map(o => {
+            return {x: o[0] * this.tileSize, y: o[1] * this.tileSize}
+        })), {
+            inertia: 5000,
+            inverseInertia: 1/5000,
+            friction: 0,
+            frictionStatic: 0,
+            frictionAir: .05
+        });
         Matter.World.add(this.world, this.player);
         Matter.Engine.run(this.engine);
+        
+//        // Physics render for testing
+//        var render = Matter.Render.create({
+//            canvas: document.getElementById("world-test"),
+//            engine: this.engine,
+//            options: {
+//                width: 400,
+//                height: 300,
+//                background: 'transparent',
+//                wireframes: true,
+//                showAngleIndicator: true
+//            }
+//        });
+//        
+//        Matter.Render.run(render);
+//        Matter.Render.lookAt(render, this.player, {x: 600, y: 600});
     }
     
     update() {
         this.renderer.setCamera(this.player.position.x / this.tileSize, this.player.position.y / this.tileSize);
-        Matter.Body.applyForce(this.player, this.player.position, {x: (controller.right1 - controller.left1) / 100, y: (controller.down1 - controller.up1) / 100});
+        this.renderer.updatePlayerSprite(this.player.angle * 180 / Math.PI);
+        
+        // Physics controls
+        var driveForceVector = {x: 0, y: (controller.down1 - controller.up1) / 50};
+        var angle = this.player.angle;
+        var rotatedDriveVector = rotateVector(driveForceVector, this.player.angle);
+        var playerPos = this.player.position;
+        var baseTurnVector = {x: (controller.right1 - controller.left1) / 250, y: 0};
+        var turnVector1 = rotateVector(baseTurnVector, angle);
+        var turnVector2 = rotateVector(baseTurnVector, angle + 180);
+        var rotatedRelativeForceOrigin1 = rotateVector({x: 0, y: -.25 * this.tileSize}, angle);
+        var forceOrigin1 = {
+            x: playerPos.x + rotatedRelativeForceOrigin1.x,
+            y: playerPos.y + rotatedRelativeForceOrigin1.y,
+        }
+        var rotatedRelativeForceOrigin2 = rotateVector({x: 0, y: .25 * this.tileSize}, angle);
+        var forceOrigin2 = {
+            x: playerPos.x + rotatedRelativeForceOrigin2.x,
+            y: playerPos.y + rotatedRelativeForceOrigin2.y,
+        }
+        Matter.Body.applyForce(this.player, playerPos, rotatedDriveVector);
+        Matter.Body.applyForce(this.player, forceOrigin1, turnVector1);
+        Matter.Body.applyForce(this.player, forceOrigin2, turnVector2);
+        
     }
     
     start() {

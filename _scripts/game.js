@@ -429,7 +429,7 @@ class Game {
                           + 2 * grid.cellValueAt(j+1, i)
                           + 4 * grid.cellValueAt(j+1, i+1)
                           + 8 * grid.cellValueAt(j, i+1);
-                if (value == 0) continue;
+                if (value == 0 || value == 15) continue;
                 var verts = Matter.Vertices.create(vertexSets[value]);
                 var vertsAvg = Matter.Vertices.centre(verts);
                 var wall = Matter.Bodies.fromVertices((j + .5) * this.tileSize, (i + .5) * this.tileSize, verts, {

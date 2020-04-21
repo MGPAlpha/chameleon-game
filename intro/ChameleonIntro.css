@@ -1,0 +1,18 @@
+html {
+    background-color: black;
+}
+
+#animation_container {
+    width: 0;
+    height: 0;
+    position: fixed
+}
+
+canvas {
+    position: fixed;
+    left: 50vw;
+    top: 50vh;
+    width: min(100vw, 100vh * 8 / 6) !important;
+    height: min(100vh, 100vw * 6 / 8) !important;
+    transform: translate(-50%, -50%);
+}

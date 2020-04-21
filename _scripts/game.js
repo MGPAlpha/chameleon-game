@@ -514,6 +514,16 @@ window.addEventListener('load', () => {
     
     setupControls();
     
+    var introSkipButton = document.getElementById("intro-skip");
+    introSkipButton.addEventListener('click', () => {
+        var intro = document.getElementById("intro")
+        intro.parentNode.removeChild(intro);
+    })
+    setTimeout(() => {
+        introSkipButton.classList.remove("hide");
+    }, 3000);
+    
+    
     var currGame = new Game(Math.random());
     currGame.start();
 });

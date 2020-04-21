@@ -3,15 +3,20 @@
     <head>
         <title>[Title TBD] Chameleon Game</title>
         <meta charset="utf-8" />
+        <link type="text/css" rel="stylesheet" href="style.css" />
         <script src="_scripts/priority-queue.js" type="text/javascript"></script>
         <script src="_scripts/decomp.min.js" type="text/javascript"></script>
         <script src="_scripts/matter.min.js" type="text/javascript"></script>
         <script src="_scripts/game.js" type="text/javascript"></script>
     </head>
     <body>
-        <div id="left-box"></div>
-        <svg id="display" width="400" height="300" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
-        <div id="right-box"></div>
-<!--        <canvas id="world-test"></canvas>-->
+        <div id="title" class="page-section">Title</div>
+        <div id="game" class="page-section">
+            <div id="left-box" class="player-text">Text</div>
+            <svg id="display" width="400" height="300" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg>
+            <div id="right-box" class="player-text">Text</div>
+        </div>
+        <div id="controls" class="page-section"></div>
+<!--        <canvas id="world-test" style="z-index: 3"></canvas>-->
     </body>
 </html>

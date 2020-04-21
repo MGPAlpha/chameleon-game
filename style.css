@@ -1,0 +1,63 @@
+:root {
+    --title-height: 100px;
+    --controls-height: 150px;
+}
+
+body {
+    margin: 0;
+}
+
+.page-section, .page-section * {
+    box-sizing: border-box;
+}
+
+#title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: var(--title-height);
+    width: 100vw;
+    font-size: 5em;
+    text-align: center;
+}
+
+#game {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: calc(100vh - var(--title-height) - var(--controls-height));
+    position: absolute;
+    top: var(--title-height);
+    width: 100vw;
+    padding: 0px 30px 0px 30px;
+}
+
+#display {
+    flex-grow: 1;
+    text-align: center;
+    height: 100%;
+    border: 3px black solid;
+    
+}
+
+.player-text {
+    width: 200px;
+    height: 175px;
+    border: 3px black solid;
+    padding: 10px;
+}
+
+#left-box {
+    border-right: none;
+}
+
+#right-box {
+    border-left: none;
+}
+
+#controls {
+    height: var(--controls-height);
+    width: 100vw;
+    position: absolute;
+    bottom: 0;
+}

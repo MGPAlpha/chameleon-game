@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@600&display=swap');
+
 :root {
     --title-height: 100px;
     --controls-height: 150px;
@@ -60,4 +62,46 @@ body {
     width: 100vw;
     position: absolute;
     bottom: 0;
+}
+
+#intro {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: black;
+    z-index: 3;
+    text-align: center;
+}
+
+#intro iframe {
+    border: none;
+    width: 100vw;
+    height: calc(100vh - 100px);
+    margin: 0;
+}
+
+#intro button {
+    box-sizing: border-box;
+    height: 50px;
+    width: calc(100vw - 100px);
+    margin-top: 25px;
+    font-size: 25px;
+    font-weight: bold;
+    font-family: 'Roboto Slab';
+    border: 3px solid white;
+    background-color: black;
+    color: white;
+    transition: background-color .5s, color .5s, border-width .5s, opacity 1s;
+}
+
+#intro button.hide {
+    opacity: 0;
+}
+
+#intro button:hover {
+    color: black;
+    background-color: white;
+    border-width: 8px;
 }

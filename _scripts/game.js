@@ -28,82 +28,6 @@ var leftBox;
 var rightBox;
 var display;
 
-var controller = {
-    up1: 0,
-    right1: 0,
-    down1: 0,
-    left1: 0,
-    
-    up2: 0,
-    right2: 0,
-    down2: 0,
-    left2: 0
-}
-
-function setupControls() {
-    document.addEventListener('keydown', (e) => {
-        switch (e.keyCode) {
-            // Player 1
-            case 65:
-                controller.left1 = 1;
-                break;
-            case 68:
-                controller.right1 = 1;
-                break;
-            case 83:
-                controller.down1 = 1;
-                break;
-            case 87:
-                controller.up1 = 1;
-                
-            // Player 2
-            case 37:
-                controller.left2 = 1;
-                break;
-            case 38:
-               controller.up2 = 1;
-                break;
-            case 39:
-                controller.right2 = 1;
-                break;
-            case 40:
-                controller.down2 = 1;
-                break;
-        }
-    });
-    
-    document.addEventListener('keyup', (e) => {
-        switch (e.keyCode) {
-            // Player 1
-            case 65:
-                controller.left1 = 0;
-                break;
-            case 68:
-                controller.right1 = 0;
-                break;
-            case 83:
-                controller.down1 = 0;
-                break;
-            case 87:
-                controller.up1 = 0;
-                
-            // Player 2
-            case 37:
-                controller.left2 = 0;
-                break;
-            case 38:
-               controller.up2 = 0;
-                break;
-            case 39:
-                controller.right2 = 0;
-                break;
-            case 40:
-                controller.down2 = 0;
-                break;
-        }
-    });
-}
-
 function rotateVector(vector, angle) {
     return {
         x: vector.x * Math.cos(angle) + vector.y * -Math.sin(angle),
@@ -129,6 +53,74 @@ function random(s) {
     return function() {
         s = Math.sin(s) * 10000; return s - Math.floor(s);
     };
+}
+
+class Control {
+    constructor(keyCode, character) {
+        this.keyCode = keyCode;
+        this.character = character;
+        this.pressed = 0;
+        this.usedPress = 0;
+    }
+}
+
+class Player {
+    constructor(id) {
+        switch (id) {
+            case 0:
+                this.up = new Control(87, "W");
+                this.left = new Control(65, "A");
+                this.down = new Control(83, "S");
+                this.right = new Control(68, "D");
+                this.outBox = leftBox;
+                break;
+            case 1:
+                this.up = new Control(38, "↑");
+                this.left = new Control(37, "←");
+                this.down = new Control(40, "↓");
+                this.right = new Control(39, "→");
+                this.outBox = rightBox;
+                break;
+        }
+        
+        this.downListener = document.addEventListener('keydown', e => {
+            switch (e.keyCode) {
+                case this.up.keyCode: 
+                    this.up.pressed = 1;
+                    this.up.usedPress = 0;
+                    break;
+                case this.left.keyCode: 
+                    this.left.pressed = 1;
+                    this.left.usedPress = 0;
+                    break;
+                case this.down.keyCode: 
+                    this.down.pressed = 1;
+                    this.down.usedPress = 0;
+                    break;
+                case this.right.keyCode: 
+                    this.right.pressed = 1;
+                    this.right.usedPress = 0;
+                    break;
+            }
+        });
+        
+        this.upListener = document.addEventListener('keyup', e => {
+            switch (e.keyCode) {
+                case this.up.keyCode: 
+                    this.up.pressed = 0;
+                    break;
+                case this.left.keyCode: 
+                    this.left.pressed = 0;
+                    break;
+                case this.down.keyCode: 
+                    this.down.pressed = 0;
+                    break;
+                case this.right.keyCode: 
+                    this.right.pressed = 0;
+                    break;
+            }
+        });
+    }
 }
 
 class Grid {
@@ -407,6 +399,10 @@ class Game {
         this.mapWidth = 80;
         this.mapHeight = 60;
         
+        this.player1 = new Player(0);
+        this.player2 = new Player(1);
+        this.activePlayer = this.player1;
+        
         this.seed = seed;
         this.grid = new Grid(this.mapHeight, this.mapWidth, seed);
         this.renderer = new Renderer(this.grid);
@@ -475,12 +471,14 @@ class Game {
         this.renderer.setCamera(this.player.position.x / this.tileSize, this.player.position.y / this.tileSize);
         this.renderer.updatePlayerSprite(this.player.angle * 180 / Math.PI);
         
+        var activePlayer = this.activePlayer;
+        
         // Physics controls
-        var driveForceVector = {x: 0, y: (controller.down1 - controller.up1) / 50};
+        var driveForceVector = {x: 0, y: (activePlayer.down.pressed - activePlayer.up.pressed) / 50};
         var angle = this.player.angle;
         var rotatedDriveVector = rotateVector(driveForceVector, this.player.angle);
         var playerPos = this.player.position;
-        var baseTurnVector = {x: (controller.right1 - controller.left1) / 250, y: 0};
+        var baseTurnVector = {x: (activePlayer.right.pressed - activePlayer.left.pressed) / 250, y: 0};
         var turnVector1 = rotateVector(baseTurnVector, angle);
         var turnVector2 = rotateVector(baseTurnVector, angle + 180);
         var rotatedRelativeForceOrigin1 = rotateVector({x: 0, y: -.25 * this.tileSize}, angle);
@@ -512,7 +510,7 @@ window.addEventListener('load', () => {
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     
-    setupControls();
+//    setupControls();
     
     var introSkipButton = document.getElementById("intro-skip");
     introSkipButton.addEventListener('click', () => {

@@ -80,6 +80,11 @@ body {
     color: yellow;
 }
 
+.player-text p {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
 #left-box {
     border-right: none;
     background-color: rgb(0, 30, 0);

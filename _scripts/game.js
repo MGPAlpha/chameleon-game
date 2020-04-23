@@ -381,7 +381,7 @@ class Renderer {
     
         this.standardZoom = 4;
         this.cellWidth = 10;
-        this.groundOffset = 100;
+        this.groundOffset = 200;
         
         this.marchingSquaresPathStrings = marchingSquaresPaths.map(o => o.map(b => b.map(j => this.cellWidth * j)));
         
@@ -681,6 +681,27 @@ class Game {
         Matter.Body.applyForce(this.playerBody, forceOrigin1, turnVector1);
         Matter.Body.applyForce(this.playerBody, forceOrigin2, turnVector2);
         
+        // End Condition
+        var winner;
+        var loser;
+        if (this.playerBody.position.x < -3 * this.tileSize) {
+            winner = this.player1;
+            loser = this.player2;
+        } else if (this.playerBody.position.x > this.tileSize * (this.mapWidth + 3)) {
+            winner = this.player2;
+            loser = this.player1;
+        }
+        if (winner != undefined) {
+            clearInterval(this.updater);
+            winner.outBox.innerHTML = "";
+            loser.outBox.innerHTML = "";
+            var winnerMessage = document.createElement("p");
+            var loserMessage = document.createElement("p");
+            winnerMessage.innerHTML = "You win!";
+            loserMessage.innerHTML = "You lose!";
+            winner.outBox.appendChild(winnerMessage);
+            loser.outBox.appendChild(loserMessage);
+        }
     }
     
     start() {

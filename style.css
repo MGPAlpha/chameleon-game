@@ -44,17 +44,55 @@ body {
 
 .player-text {
     width: 200px;
-    height: 175px;
+    min-height: 175px;
     border: 3px black solid;
-    padding: 10px;
+    overflow-x: wrap;
+    color: white;
+}
+
+.player-text::before {
+    display: block;
+    height: 25px;
+    background-color: rgba(0, 0, 0, .7);
+    border-bottom: inherit;
+    font-family: 'Roboto Slab';
+    padding: 2px 4px 0px 4px;
+}
+
+.player-text .instruction {
+    margin: 6px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.player-text .instruction.success {
+    color: green;
+}
+
+.player-text .instruction.fail {
+    color: red;
+}
+
+.player-text .instruction.target {
+    color: yellow;
 }
 
 #left-box {
     border-right: none;
+    background-color: rgb(0, 30, 0);
+}
+
+#left-box::before {
+    content: "Player 1 (WASD)"
 }
 
 #right-box {
     border-left: none;
+    background-color: rgb(40, 0, 20);
+}
+
+#right-box::before {
+    content: "Player 2 (Arrow Keys)"
 }
 
 #controls {

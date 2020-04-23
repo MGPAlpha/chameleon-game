@@ -381,6 +381,7 @@ class Renderer {
     
         this.standardZoom = 4;
         this.cellWidth = 10;
+        this.groundOffset = 100;
         
         this.marchingSquaresPathStrings = marchingSquaresPaths.map(o => o.map(b => b.map(j => this.cellWidth * j)));
         
@@ -400,19 +401,35 @@ class Renderer {
         var defs = document.createElementNS(svgNS, "defs");
 
         // Prepare patterns
+        // Wall Pattern
         var wallPattern = document.createElementNS(svgNS, "pattern");
         wallPattern.setAttribute("id", "wall-pattern");
         wallPattern.setAttribute("x", "0");
         wallPattern.setAttribute("y", "0");
-        wallPattern.setAttribute("width", "100");
-        wallPattern.setAttribute("height", "100");
+        wallPattern.setAttribute("width", "50");
+        wallPattern.setAttribute("height", "50");
         wallPattern.setAttribute("patternUnits", "userSpaceOnUse");
-        var groundTexture = document.createElementNS(svgNS, "image");
-        groundTexture.setAttribute("href", "_assets/wall.png");
-        groundTexture.setAttribute("width", "100");
-        groundTexture.setAttribute("height", "100");
-        wallPattern.appendChild(groundTexture);
+        var wallTexture = document.createElementNS(svgNS, "image");
+        wallTexture.setAttribute("href", "_assets/wall.png");
+        wallTexture.setAttribute("width", "50");
+        wallTexture.setAttribute("height", "50");
+        wallPattern.appendChild(wallTexture);
         defs.appendChild(wallPattern);
+        
+        // Ground Pattern
+        var groundPattern = document.createElementNS(svgNS, "pattern");
+        groundPattern.setAttribute("id", "ground-pattern");
+        groundPattern.setAttribute("x", "0");
+        groundPattern.setAttribute("y", "0");
+        groundPattern.setAttribute("width", "50");
+        groundPattern.setAttribute("height", "50");
+        groundPattern.setAttribute("patternUnits", "userSpaceOnUse");
+        var groundTexture = document.createElementNS(svgNS, "image");
+        groundTexture.setAttribute("href", "_assets/ground.png");
+        groundTexture.setAttribute("width", "50");
+        groundTexture.setAttribute("height", "50");
+        groundPattern.appendChild(groundTexture);
+        defs.appendChild(groundPattern);
 
         // Generate defs for marching squares
         for (var i = 1; i < marchingSquaresPathStrings.length; i++) {
@@ -444,6 +461,7 @@ class Renderer {
         wallMask.appendChild(wallGroup);
         display.appendChild(wallMask);
         display.appendChild(defs);
+        
         var wall = document.createElementNS(svgNS, "rect");
         wall.setAttribute("x", 0);
         wall.setAttribute("y", 0);
@@ -452,7 +470,17 @@ class Renderer {
         wall.setAttribute("mask", "url(#wall-mask)");
         wall.setAttribute("fill", "url(#wall-pattern)");
         this.wall = wall;
+        
+        var ground = document.createElementNS(svgNS, "rect");
+        ground.setAttribute("x", -this.groundOffset);
+        ground.setAttribute("y", -this.groundOffset);
+        ground.setAttribute("width", grid.width * 10 + 2 * this.groundOffset);
+        ground.setAttribute("height", grid.height * 10 + 2 * this.groundOffset);
+        ground.setAttribute("fill", "url(#ground-pattern)");
+        this.ground = ground;
+        
         this.setCamera(grid.width / 2, grid.height / 2);
+        display.appendChild(ground);
         display.appendChild(wall);
         
         var tempPlayerSpritePath = playerBodyPath.map(o => o.map(b => b * this.cellWidth));
@@ -467,6 +495,7 @@ class Renderer {
     
     setCamera(x, y) {
         this.wall.setAttribute("transform", `translate(${-this.cellWidth * x * this.standardZoom + 200}, ${-this.cellWidth * y * this.standardZoom + 150}) scale(${this.standardZoom})`);
+        this.ground.setAttribute("transform", `translate(${-this.cellWidth * x * this.standardZoom + 200}, ${-this.cellWidth * y * this.standardZoom + 150}) scale(${this.standardZoom})`);
     }
     
     updatePlayerSprite(angle) {

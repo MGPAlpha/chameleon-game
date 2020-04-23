@@ -55,12 +55,92 @@ function random(s) {
     };
 }
 
+class ControlTask {
+    constructor(size, player) {
+        this.player = player;
+        this.failPenalty = 2500;
+        this.lastFailTime = Date.now();
+        this.size = size;
+        this.instructions = [];
+        for (var i = 0; i < size; i++) {
+            this.instructions.push(Math.floor(Math.random() * 4));
+        }
+        this.progress = 0;
+        this.completed = this.size <= 0;
+        this.failed = false;
+    }
+    
+    completed() {
+        return this.progress >= this.size;
+    }
+    
+    initDisplay() {
+        var player = this.player;
+        var box = player.outBox;
+        box.innerHTML = "";
+        this.instructionElements = [];
+        for (var i = 0; i < this.instructions.length; i++) {
+            var newElement = document.createElement("span");
+            newElement.innerHTML = player.controls[this.instructions[i]].character;
+            newElement.classList.add("instruction");
+            box.appendChild(newElement);
+            this.instructionElements[i] = newElement;
+        }
+        this.instructionElements[0].classList.add("target");
+        this.initialized = true;
+    }
+    
+    update() {
+        if (!this.initialized) return;
+        if (this.failed) {
+            if (Date.now() - this.lastFailTime > this.failPenalty) {
+                this.failed = false;
+                this.instructionElements.forEach(o => {
+                    o.classList.remove("fail");
+                    o.classList.remove("success");
+                    o.classList.remove("target");
+                });
+                this.instructionElements[0].classList.add("target");
+            }
+            return false;
+        }
+        this.player.controls.forEach((control, index) => {
+            if (control.pressed && !control.usedPress) {
+                control.usedPress = true;
+                if (index == this.instructions[this.progress]) {
+                    this.instructionElements[this.progress].classList.add("success");
+                    this.instructionElements[this.progress].classList.remove("target");
+                    this.progress++;
+                    if (this.progress < this.size) this.instructionElements[this.progress].classList.add("target");
+                } else {
+                    this.instructionElements[this.progress].classList.remove("target");
+                    this.instructionElements[this.progress].classList.add("fail");
+                    this.failed = true;
+                    this.progress = 0;
+                    this.lastFailTime = Date.now();
+                }
+            }
+        });
+        if (this.progress == this.size) {
+            this.player.controls.forEach(control => {
+                control.usedPress = 1;
+            });
+            this.player.outBox.innerHTML = "You're in control!";
+            return true;
+        } else return false;
+    }
+}
+
 class Control {
     constructor(keyCode, character) {
         this.keyCode = keyCode;
         this.character = character;
         this.pressed = 0;
         this.usedPress = 0;
+    }
+    
+    conditionalPressed() {
+        return this.usedPress == 0 ? this.pressed : 0;
     }
 }
 
@@ -82,6 +162,10 @@ class Player {
                 this.outBox = rightBox;
                 break;
         }
+        
+        this.id = id;
+        
+        this.controls = [this.up, this.left, this.down, this.right];
         
         this.downListener = document.addEventListener('keydown', e => {
             switch (e.keyCode) {
@@ -401,7 +485,8 @@ class Game {
         
         this.player1 = new Player(0);
         this.player2 = new Player(1);
-        this.activePlayer = this.player1;
+        
+        this.instrCount = 10;
         
         this.seed = seed;
         this.grid = new Grid(this.mapHeight, this.mapWidth, seed);
@@ -438,7 +523,7 @@ class Game {
             }
         }
         
-        this.player = Matter.Bodies.fromVertices(this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2, Matter.Vertices.create(playerBodyPath.map(o => {
+        this.playerBody = Matter.Bodies.fromVertices(this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2, Matter.Vertices.create(playerBodyPath.map(o => {
             return {x: o[0] * this.tileSize, y: o[1] * this.tileSize}
         })), {
             inertia: 5000,
@@ -447,8 +532,14 @@ class Game {
             frictionStatic: 0,
             frictionAir: .05
         });
-        Matter.World.add(this.world, this.player);
-        Matter.Engine.run(this.engine);
+        Matter.World.add(this.world, this.playerBody);
+        
+        this.physicsStarted = false;
+        
+        this.playerStartTask1 = new ControlTask(10, this.player1);
+        this.playerStartTask2 = new ControlTask(10, this.player2);
+        this.playerStartTask1.initDisplay();
+        this.playerStartTask2.initDisplay();
         
 //        // Physics render for testing
 //        var render = Matter.Render.create({
@@ -468,17 +559,46 @@ class Game {
     }
     
     update() {
-        this.renderer.setCamera(this.player.position.x / this.tileSize, this.player.position.y / this.tileSize);
-        this.renderer.updatePlayerSprite(this.player.angle * 180 / Math.PI);
+        this.renderer.setCamera(this.playerBody.position.x / this.tileSize, this.playerBody.position.y / this.tileSize);
+        this.renderer.updatePlayerSprite(this.playerBody.angle * 180 / Math.PI);
+        
+        if (!this.physicsStarted) {
+            var newControlPlayer;
+            var newTaskPlayer;
+            if (this.playerStartTask1.update()) {
+                console.log("Point to player 1");
+                newControlPlayer = this.player1;
+                newTaskPlayer = this.player2;
+            } else if (this.playerStartTask2.update()) {
+                console.log("Point to player 2");
+                newControlPlayer = this.player2;
+                newTaskPlayer = this.player1;
+            }
+            if (newControlPlayer != undefined) {
+                this.startPhysics();
+                console.log("test");
+                this.activePlayer = newControlPlayer;
+                this.currTask = new ControlTask(this.instrCount, newTaskPlayer);
+                this.currTask.initDisplay();
+            }
+            return;
+        }
+        
+        if (this.currTask.update()) {
+            var temp = this.activePlayer;
+            this.activePlayer = this.currTask.player;
+            this.currTask = new ControlTask(++this.instrCount, temp);
+            this.currTask.initDisplay();
+        }
         
         var activePlayer = this.activePlayer;
         
         // Physics controls
-        var driveForceVector = {x: 0, y: (activePlayer.down.pressed - activePlayer.up.pressed) / 50};
-        var angle = this.player.angle;
-        var rotatedDriveVector = rotateVector(driveForceVector, this.player.angle);
-        var playerPos = this.player.position;
-        var baseTurnVector = {x: (activePlayer.right.pressed - activePlayer.left.pressed) / 250, y: 0};
+        var driveForceVector = {x: 0, y: (activePlayer.down.conditionalPressed() - activePlayer.up.conditionalPressed()) / 50};
+        var angle = this.playerBody.angle;
+        var rotatedDriveVector = rotateVector(driveForceVector, this.playerBody.angle);
+        var playerPos = this.playerBody.position;
+        var baseTurnVector = {x: (activePlayer.right.conditionalPressed() - activePlayer.left.conditionalPressed()) / 250, y: 0};
         var turnVector1 = rotateVector(baseTurnVector, angle);
         var turnVector2 = rotateVector(baseTurnVector, angle + 180);
         var rotatedRelativeForceOrigin1 = rotateVector({x: 0, y: -.25 * this.tileSize}, angle);
@@ -491,9 +611,9 @@ class Game {
             x: playerPos.x + rotatedRelativeForceOrigin2.x,
             y: playerPos.y + rotatedRelativeForceOrigin2.y,
         }
-        Matter.Body.applyForce(this.player, playerPos, rotatedDriveVector);
-        Matter.Body.applyForce(this.player, forceOrigin1, turnVector1);
-        Matter.Body.applyForce(this.player, forceOrigin2, turnVector2);
+        Matter.Body.applyForce(this.playerBody, playerPos, rotatedDriveVector);
+        Matter.Body.applyForce(this.playerBody, forceOrigin1, turnVector1);
+        Matter.Body.applyForce(this.playerBody, forceOrigin2, turnVector2);
         
     }
     
@@ -502,7 +622,14 @@ class Game {
             this.update();
         }, 1000 / 30);
     }
+    
+    startPhysics() {
+        this.physicsStarted = true;
+        Matter.Engine.run(this.engine);
+    }
 }
+
+var currGame;
 
 window.addEventListener('load', () => {
     // Set up DOM references
@@ -522,6 +649,7 @@ window.addEventListener('load', () => {
     }, 3000);
     
     
-    var currGame = new Game(Math.random());
+    currGame = new Game(Math.random());
     currGame.start();
+//    currGame.startPhysics();
 });

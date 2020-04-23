@@ -386,6 +386,27 @@ class Renderer {
         this.marchingSquaresPathStrings = marchingSquaresPaths.map(o => o.map(b => b.map(j => this.cellWidth * j)));
         
         this.grid = grid;
+        
+        this.chameleonSprites = [
+            [
+                "_assets/Green Vertical Walk/Green-Vertical-Idle.png",
+                "_assets/Green Vertical Walk/Green-Vertical-Walk_1.png",
+                "_assets/Green Vertical Walk/Green-Vertical-Walk_2.png",
+                "_assets/Green Vertical Walk/Green-Vertical-Walk_3.png",
+                "_assets/Green Vertical Walk/Green-Vertical-Walk_4.png"
+            ], [
+                "_assets/Pink Vertical Walk/Pink-Vertical-Idle.png",
+                "_assets/Pink Vertical Walk/Pink-Vertical-Walk_1.png",
+                "_assets/Pink Vertical Walk/Pink-Vertical-Walk_2.png",
+                "_assets/Pink Vertical Walk/Pink-Vertical-Walk_3.png",
+                "_assets/Pink Vertical Walk/Pink-Vertical-Walk_4.png"
+                
+            ]
+        ]
+        
+        this.spriteWidth = 400;
+        this.spriteHeight = 680;
+        this.spriteSize = 1/68;
 
     }
     
@@ -439,6 +460,20 @@ class Renderer {
             path.setAttribute("points", marchingSquaresPathStrings[i]);
             defs.appendChild(path);
         }
+        
+        // Generate defs for chameleon sprites
+        this.playerSpriteDefs = this.chameleonSprites.map((o, i) => o.map((path, j) => {
+            var sprite = document.createElementNS(svgNS, "image");
+            sprite.setAttribute("x", "0")
+            sprite.setAttribute("y", "0")
+            sprite.setAttribute("href", path);
+            sprite.setAttribute("transform", `scale(${this.spriteSize}) translate(${-this.spriteWidth / 2}, ${-this.spriteHeight / 2})`);
+            sprite.setAttribute("id", `player-sprite-${i}-${j}`);
+            defs.appendChild(sprite);
+            return sprite;
+        }));
+        
+        display.appendChild(defs);
 
         var wallGroup = document.createElementNS(svgNS, "g");
         wallGroup.setAttribute("id", "wall-group");
@@ -460,7 +495,6 @@ class Renderer {
         wallMask.setAttribute("id", "wall-mask");
         wallMask.appendChild(wallGroup);
         display.appendChild(wallMask);
-        display.appendChild(defs);
         
         var wall = document.createElementNS(svgNS, "rect");
         wall.setAttribute("x", 0);
@@ -483,12 +517,10 @@ class Renderer {
         display.appendChild(ground);
         display.appendChild(wall);
         
-        var tempPlayerSpritePath = playerBodyPath.map(o => o.map(b => b * this.cellWidth));
         // Create player sprite
-        var playerSprite = document.createElementNS(svgNS, "polygon");
+        var playerSprite = document.createElementNS(svgNS, "use");
         playerSprite.setAttribute("transform", `translate(200, 150) scale(${this.standardZoom})`);
-        playerSprite.setAttribute("points", tempPlayerSpritePath);
-        playerSprite.setAttribute("fill", "black");
+        playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[0][0].id);
         display.appendChild(playerSprite);
         this.playerSprite = playerSprite;
     }
@@ -498,8 +530,13 @@ class Renderer {
         this.ground.setAttribute("transform", `translate(${-this.cellWidth * x * this.standardZoom + 200}, ${-this.cellWidth * y * this.standardZoom + 150}) scale(${this.standardZoom})`);
     }
     
-    updatePlayerSprite(angle) {
+    updatePlayerSprite(angle, walking, player) {
         this.playerSprite.setAttribute("transform", `translate(200, 150) scale(${this.standardZoom}) rotate(${angle})`);
+        if (player == undefined) {
+            this.playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[(Date.now() % 500 < 250) ? 0 : 1][0].id);
+        } else {
+            this.playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[player.id][walking ? Math.floor((Date.now() % 500) / 125) + 1 : 0].id);
+        }
     }
 }
 
@@ -589,7 +626,7 @@ class Game {
     
     update() {
         this.renderer.setCamera(this.playerBody.position.x / this.tileSize, this.playerBody.position.y / this.tileSize);
-        this.renderer.updatePlayerSprite(this.playerBody.angle * 180 / Math.PI);
+        this.renderer.updatePlayerSprite(this.playerBody.angle * 180 / Math.PI, this.playerBody.speed > 4, this.activePlayer);
         
         if (!this.physicsStarted) {
             var newControlPlayer;

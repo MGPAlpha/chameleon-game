@@ -718,23 +718,30 @@ class Game {
 
 var currGame;
 
+function storageExists() {
+    return typeof(Storage) !== "undefined";
+}
+
 window.addEventListener('load', () => {
     // Set up DOM references
     leftBox = document.getElementById("left-box");
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     
-//    setupControls();
-    
-    var introSkipButton = document.getElementById("intro-skip");
-    introSkipButton.addEventListener('click', () => {
-        var intro = document.getElementById("intro")
+    var intro = document.getElementById("intro")
+    console.log(localStorage);
+    if (storageExists() && localStorage.getItem("introSeen") == 1) {
         intro.parentNode.removeChild(intro);
-    })
-    setTimeout(() => {
-        introSkipButton.classList.remove("hide");
-    }, 3000);
-    
+    } else {
+        var introSkipButton = document.getElementById("intro-skip");
+        introSkipButton.addEventListener('click', () => {
+            intro.parentNode.removeChild(intro);
+            if (storageExists()) localStorage.setItem("introSeen", 1);
+        })
+        setTimeout(() => {
+            introSkipButton.classList.remove("hide");
+        }, 3000);
+    }
     
     currGame = new Game(Math.random());
     currGame.start();

@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@600&display=swap');
+
+:root {
+    --title-height: 150px;
+    --controls-height: 100px;
+}
+
+body {
+    margin: 0;
+}
+
+.page-section, .page-section * {
+    box-sizing: border-box;
+}
+
+#title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: var(--title-height);
+    width: 100vw;
+    text-align: center;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9), rgba(0,0,0,0.4)), url(_assets/wall.png) repeat;
+    background-size: contain, contain;
+}
+
+#game {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: calc(100vh - var(--title-height) - var(--controls-height));
+    position: absolute;
+    top: var(--title-height);
+    width: 100vw;
+    padding: 0px 30px 0px 30px;
+    background-image: linear-gradient(90deg, rgb(0, 200, 90) 0%, rgb(0, 200, 90) 50%, rgb(255, 160, 160) 50%, rgb(255, 160, 160) 100%);
+}
+
+#display {
+    flex-grow: 1;
+    text-align: center;
+    height: 100%;
+    border: 3px black solid;
+    background-color: white;
+    border-top: none;
+    border-bottom: none;
+}
+
+.player-text {
+    width: 200px;
+    min-height: 175px;
+    border: 3px black solid;
+    overflow-x: wrap;
+    color: white;
+    font-family: 'Roboto Slab';
+}
+
+.player-text::before {
+    display: block;
+    height: 25px;
+    background-color: rgba(0, 0, 0, .7);
+    border-bottom: inherit;
+    font-family: 'Roboto Slab';
+    padding: 2px 4px 0px 4px;
+}
+
+.player-text .instruction {
+    margin: 6px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.player-text .instruction.success {
+    color: green;
+}
+
+.player-text .instruction.fail {
+    color: red;
+}
+
+.player-text .instruction.target {
+    color: yellow;
+}
+
+.player-text p, .player-text h2 {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#left-box {
+    border-right: none;
+    background-color: rgb(0, 30, 0);
+}
+
+#left-box::before {
+    content: "Player 1 (WASD)"
+}
+
+#right-box {
+    border-left: none;
+    background-color: rgb(40, 0, 20);
+}
+
+#right-box::before {
+    content: "Player 2 (Arrow Keys)"
+}
+
+#controls {
+    height: var(--controls-height);
+    width: 100vw;
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .4), rgba(0, 0, 0, .9)), url(_assets/ground.png) repeat;
+    background-size: contain, contain;
+}
+
+#controls button, #controls label {
+    margin: 10px;
+    font-size: 20px;
+    font-family: 'Roboto Slab';
+    background-color: white;
+    color: black;
+    border: 3px black solid;
+    box-sizing: border-box;
+    padding: 4px;
+    transition: border-width .5s, color .5s, background-color .5s, padding .5s;
+}
+
+#controls button:hover:enabled, #controls label:hover {
+    background-color: black;
+    color: white;
+    border-width: 5px;
+    padding: 2px;
+}
+
+#controls button:disabled {
+    background-color: gray;
+}
+
+#controls input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-window {
+    font-family: 'Roboto Slab';
+}
+
+.toggle-window ul {
+    font-size: 18px;
+}
+
+.toggle-window a {
+    text-decoration: none;
+    color: black;
+    background-image: linear-gradient(0deg, black, black);
+    background-position: 0 90%;
+    background-size: 100% 8%;
+    background-repeat: no-repeat;
+    transition: background-size .5s, color .5s;
+}
+
+.toggle-window a:hover {
+    background-size: 100% 100%;
+    color: white;
+}
+
+#controls input[type="checkbox"] + .toggle-window {
+    display: none;
+    position: fixed;
+    top: 100px;
+    left: 100px;
+    box-sizing: border-box;
+    width: calc(100vw - 200px);
+    height: calc(100vh - 100px);
+    background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), url("_assets/ground.png") repeat;
+    background-size: contain, 200px 200px;
+    padding: 20px;
+    padding-top: 50px;
+    border: black solid;
+    border-width: 4px 4px 0 4px;
+    overflow-y: auto;
+}
+
+#controls input[type="checkbox"] + .toggle-window label {
+    display: inline-block;
+    position: fixed;
+    margin: 0;
+    margin-top: -30px;
+}
+
+#controls input[type="checkbox"] + .toggle-window label::before {
+    display: inline-block;
+    content: "Back";
+}
+
+#controls input[type="checkbox"]:checked + .toggle-window {
+    display: block;
+}
+
+#intro {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: black;
+    z-index: 3;
+    text-align: center;
+}
+
+#intro iframe {
+    border: none;
+    width: 100vw;
+    height: calc(100vh - 100px);
+    margin: 0;
+}
+
+#intro button {
+    box-sizing: border-box;
+    height: 50px;
+    width: calc(100vw - 100px);
+    margin-top: 25px;
+    font-size: 25px;
+    font-weight: bold;
+    font-family: 'Roboto Slab';
+    border: 3px solid white;
+    background-color: black;
+    color: white;
+    transition: background-color .5s, color .5s, border-width .5s, opacity 1s;
+}
+
+#intro button.hide {
+    opacity: 0;
+}
+
+#intro button:hover {
+    color: black;
+    background-color: white;
+    border-width: 8px;
+}

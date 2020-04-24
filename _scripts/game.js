@@ -408,6 +408,9 @@ class Renderer {
         this.spriteHeight = 680;
         this.spriteSize = 1/68;
 
+        var arrowSize = .15;
+        this.arrowWidth = 231 * arrowSize;
+        this.arrowHeight = 311 * arrowSize;
     }
     
         
@@ -474,7 +477,7 @@ class Renderer {
         }));
         
         display.appendChild(defs);
-
+        
         var wallGroup = document.createElementNS(svgNS, "g");
         wallGroup.setAttribute("id", "wall-group");
         for (var i = -1; i < grid.height; i++) {
@@ -523,6 +526,46 @@ class Renderer {
         playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[0][0].id);
         display.appendChild(playerSprite);
         this.playerSprite = playerSprite;
+        
+        
+        
+        // Create Arrows
+        var greenArrow = document.createElementNS(svgNS, "image");
+        var pinkArrow = document.createElementNS(svgNS, "image");
+        greenArrow.setAttribute("href", "_assets/arrows/greenarrow.png");
+        pinkArrow.setAttribute("href", "_assets/arrows/pinkarrow.png");
+        greenArrow.setAttribute("height", this.arrowHeight);
+        pinkArrow.setAttribute("height", this.arrowHeight);
+        greenArrow.setAttribute("y", 150 - this.arrowHeight / 2);
+        pinkArrow.setAttribute("y", 150 - this.arrowHeight / 2);
+        greenArrow.setAttribute("x", 30 - this.arrowWidth / 2);
+        pinkArrow.setAttribute("x", 370 - this.arrowWidth / 2);
+        greenArrow.setAttribute("transform", `rotate(-90, 30, 150)`);
+        pinkArrow.setAttribute("transform", `rotate(90, 370, 150)`);
+        greenArrow.setAttribute("visibility", "hidden");
+        pinkArrow.setAttribute("visibility", "hidden");
+        var greenArrowAnimation = document.createElementNS(svgNS, "animateMotion");
+        var pinkArrowAnimation = document.createElementNS(svgNS, "animateMotion");
+        greenArrowAnimation.setAttribute("dur", "1s");
+        pinkArrowAnimation.setAttribute("dur", "1s");
+        greenArrowAnimation.setAttribute("repeatCount", "indefinite");
+        pinkArrowAnimation.setAttribute("repeatCount", "indefinite");
+        greenArrowAnimation.setAttribute("path", "M0,0 l-10,0 l10,0 z");
+        pinkArrowAnimation.setAttribute("path", "M0,0 l10,0 l-10,0 z");
+        greenArrowAnimation.setAttribute("calcMode", "spline");
+        pinkArrowAnimation.setAttribute("calcMode", "spline");
+        greenArrowAnimation.setAttribute("keyTimes", "0; 1");
+        pinkArrowAnimation.setAttribute("keyTimes", "0; 1");
+        greenArrowAnimation.setAttribute("keySplines", ".7 0 .3 1");
+        pinkArrowAnimation.setAttribute("keySplines", ".7 0 .3 1");
+        greenArrow.appendChild(greenArrowAnimation);
+        pinkArrow.appendChild(pinkArrowAnimation);
+        
+        display.appendChild(greenArrow);
+        display.appendChild(pinkArrow);
+        this.arrows = [];
+        this.arrows[0] = greenArrow;
+        this.arrows[1] = pinkArrow;
     }
     
     setCamera(x, y) {
@@ -536,6 +579,8 @@ class Renderer {
             this.playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[(Date.now() % 500 < 250) ? 0 : 1][0].id);
         } else {
             this.playerSprite.setAttribute("href", "#" + this.playerSpriteDefs[player.id][walking ? Math.floor((Date.now() % 500) / 125) + 1 : 0].id);
+            this.arrows[player.id].setAttribute("visibility", "visible");
+            this.arrows[1 - player.id].setAttribute("visibility", "hidden");
         }
     }
 }
@@ -695,8 +740,8 @@ class Game {
             clearInterval(this.updater);
             winner.outBox.innerHTML = "";
             loser.outBox.innerHTML = "";
-            var winnerMessage = document.createElement("p");
-            var loserMessage = document.createElement("p");
+            var winnerMessage = document.createElement("h2");
+            var loserMessage = document.createElement("h2");
             winnerMessage.innerHTML = "You win!";
             loserMessage.innerHTML = "You lose!";
             winner.outBox.appendChild(winnerMessage);

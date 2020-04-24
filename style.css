@@ -52,6 +52,7 @@ body {
     border: 3px black solid;
     overflow-x: wrap;
     color: white;
+    font-family: 'Roboto Slab';
 }
 
 .player-text::before {
@@ -81,7 +82,7 @@ body {
     color: yellow;
 }
 
-.player-text p {
+.player-text p, .player-text h2 {
     margin-left: 10px;
     margin-right: 10px;
 }

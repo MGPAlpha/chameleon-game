@@ -718,25 +718,46 @@ class Game {
 
 var currGame;
 
+function storageExists() {
+    return typeof(Storage) !== "undefined";
+}
+
 window.addEventListener('load', () => {
     // Set up DOM references
     leftBox = document.getElementById("left-box");
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     
-//    setupControls();
+    document.getElementById("start").addEventListener('click', e => {
+        currGame = new Game(Math.random());
+        currGame.start();
+        document.getElementById("start").disabled = true;
+        document.getElementById("new-game").disabled = false;
+    });
     
-    var introSkipButton = document.getElementById("intro-skip");
-    introSkipButton.addEventListener('click', () => {
-        var intro = document.getElementById("intro")
-        intro.parentNode.removeChild(intro);
+    document.getElementById("new-game").addEventListener('click', e => {
+        window.location.reload();
+    });
+    
+    document.getElementById("replay-intro").addEventListener('click', e => {
+        if (storageExists()) {
+            localStorage.setItem("introSeen", 0);
+        }
+        window.location.reload();
     })
-    setTimeout(() => {
-        introSkipButton.classList.remove("hide");
-    }, 3000);
     
-    
-    currGame = new Game(Math.random());
-    currGame.start();
-//    currGame.startPhysics();
+    var intro = document.getElementById("intro")
+    console.log(localStorage);
+    if (storageExists() && localStorage.getItem("introSeen") == 1) {
+        intro.parentNode.removeChild(intro);
+    } else {
+        var introSkipButton = document.getElementById("intro-skip");
+        introSkipButton.addEventListener('click', () => {
+            intro.parentNode.removeChild(intro);
+            if (storageExists()) localStorage.setItem("introSeen", 1);
+        })
+        setTimeout(() => {
+            introSkipButton.classList.remove("hide");
+        }, 3000);
+    }
 });

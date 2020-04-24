@@ -740,8 +740,8 @@ class Game {
             clearInterval(this.updater);
             winner.outBox.innerHTML = "";
             loser.outBox.innerHTML = "";
-            var winnerMessage = document.createElement("p");
-            var loserMessage = document.createElement("p");
+            var winnerMessage = document.createElement("h2");
+            var loserMessage = document.createElement("h2");
             winnerMessage.innerHTML = "You win!";
             loserMessage.innerHTML = "You lose!";
             winner.outBox.appendChild(winnerMessage);

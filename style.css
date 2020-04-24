@@ -108,6 +108,35 @@ body {
     width: 100vw;
     position: absolute;
     bottom: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .4), rgba(0, 0, 0, .9)), url(_assets/ground.png) repeat;
+    background-size: contain, contain;
+}
+
+#controls button {
+    margin: 10px;
+    font-size: 20px;
+    font-family: 'Roboto Slab';
+    background-color: white;
+    color: black;
+    border: 3px black solid;
+    box-sizing: border-box;
+    padding: 4px;
+    transition: border-width .5s, color .5s, background-color .5s, padding .5s;
+}
+
+#controls button:hover:enabled {
+    background-color: black;
+    color: white;
+    border-width: 5px;
+    padding: 2px;
+}
+
+#controls button:disabled {
+    background-color: gray;
 }
 
 #intro {

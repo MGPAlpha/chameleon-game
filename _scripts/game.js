@@ -728,6 +728,24 @@ window.addEventListener('load', () => {
     rightBox = document.getElementById("right-box");
     display = document.getElementById("display");
     
+    document.getElementById("start").addEventListener('click', e => {
+        currGame = new Game(Math.random());
+        currGame.start();
+        document.getElementById("start").disabled = true;
+        document.getElementById("new-game").disabled = false;
+    });
+    
+    document.getElementById("new-game").addEventListener('click', e => {
+        window.location.reload();
+    });
+    
+    document.getElementById("replay-intro").addEventListener('click', e => {
+        if (storageExists()) {
+            localStorage.setItem("introSeen", 0);
+        }
+        window.location.reload();
+    })
+    
     var intro = document.getElementById("intro")
     console.log(localStorage);
     if (storageExists() && localStorage.getItem("introSeen") == 1) {
@@ -742,8 +760,4 @@ window.addEventListener('load', () => {
             introSkipButton.classList.remove("hide");
         }, 3000);
     }
-    
-    currGame = new Game(Math.random());
-    currGame.start();
-//    currGame.startPhysics();
 });

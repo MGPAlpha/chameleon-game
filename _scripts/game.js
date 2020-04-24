@@ -80,8 +80,17 @@ class ControlTask {
         box.innerHTML = "";
         this.instructionElements = [];
         for (var i = 0; i < this.instructions.length; i++) {
-            var newElement = document.createElement("span");
-            newElement.innerHTML = player.controls[this.instructions[i]].character;
+            var control = player.controls[this.instructions[i]];
+            var newElement;
+            if (control.useFaIcon) {
+                newElement = document.createElement("i");
+                newElement.classList.add("fas");
+                newElement.classList.add(control.character);
+            } else {
+                newElement = document.createElement("span");
+                newElement.innerHTML = player.controls[this.instructions[i]].character;
+            }
+            
             newElement.classList.add("instruction");
             box.appendChild(newElement);
             this.instructionElements[i] = newElement;
@@ -132,11 +141,12 @@ class ControlTask {
 }
 
 class Control {
-    constructor(keyCode, character) {
+    constructor(keyCode, character, useFaIcon) {
         this.keyCode = keyCode;
         this.character = character;
         this.pressed = 0;
         this.usedPress = 0;
+        this.useFaIcon = useFaIcon;
     }
     
     conditionalPressed() {
@@ -148,17 +158,17 @@ class Player {
     constructor(id) {
         switch (id) {
             case 0:
-                this.up = new Control(87, "W");
-                this.left = new Control(65, "A");
-                this.down = new Control(83, "S");
-                this.right = new Control(68, "D");
+                this.up = new Control(87, "fa-arrow-up", true);
+                this.left = new Control(65, "fa-arrow-left", true);
+                this.down = new Control(83, "fa-arrow-down", true);
+                this.right = new Control(68, "fa-arrow-right", true);
                 this.outBox = leftBox;
                 break;
             case 1:
-                this.up = new Control(38, "↑");
-                this.left = new Control(37, "←");
-                this.down = new Control(40, "↓");
-                this.right = new Control(39, "→");
+                this.up = new Control(38, "fa-arrow-up", true);
+                this.left = new Control(37, "fa-arrow-left", true);
+                this.down = new Control(40, "fa-arrow-down", true);
+                this.right = new Control(39, "fa-arrow-right", true);
                 this.outBox = rightBox;
                 break;
         }

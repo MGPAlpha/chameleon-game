@@ -43,6 +43,7 @@ body {
     border: 3px black solid;
     background-color: white;
     border-top: none;
+    border-bottom: none;
 }
 
 .player-text {

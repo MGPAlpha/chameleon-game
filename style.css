@@ -43,6 +43,7 @@ body {
     border: 3px black solid;
     background-color: white;
     border-top: none;
+    border-bottom: none;
 }
 
 .player-text {
@@ -116,7 +117,7 @@ body {
     background-size: contain, contain;
 }
 
-#controls button {
+#controls button, #controls label {
     margin: 10px;
     font-size: 20px;
     font-family: 'Roboto Slab';
@@ -128,7 +129,7 @@ body {
     transition: border-width .5s, color .5s, background-color .5s, padding .5s;
 }
 
-#controls button:hover:enabled {
+#controls button:hover:enabled, #controls label:hover {
     background-color: black;
     color: white;
     border-width: 5px;
@@ -137,6 +138,66 @@ body {
 
 #controls button:disabled {
     background-color: gray;
+}
+
+#controls input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-window {
+    font-family: 'Roboto Slab';
+}
+
+.toggle-window ul {
+    font-size: 18px;
+}
+
+.toggle-window a {
+    text-decoration: none;
+    color: black;
+    background-image: linear-gradient(0deg, black, black);
+    background-position: 0 90%;
+    background-size: 100% 8%;
+    background-repeat: no-repeat;
+    transition: background-size .5s, color .5s;
+}
+
+.toggle-window a:hover {
+    background-size: 100% 100%;
+    color: white;
+}
+
+#controls input[type="checkbox"] + .toggle-window {
+    display: none;
+    position: fixed;
+    top: 100px;
+    left: 100px;
+    box-sizing: border-box;
+    width: calc(100vw - 200px);
+    height: calc(100vh - 100px);
+    background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), url("_assets/ground.png") repeat;
+    background-size: contain, 200px 200px;
+    padding: 20px;
+    padding-top: 50px;
+    border: black solid;
+    border-width: 4px 4px 0 4px;
+    overflow-y: auto;
+}
+
+#controls input[type="checkbox"] + .toggle-window label {
+    display: inline-block;
+    position: fixed;
+    margin: 0;
+    margin-top: -30px;
+}
+
+#controls input[type="checkbox"] + .toggle-window label::before {
+    display: inline-block;
+    content: "Back";
+}
+
+#controls input[type="checkbox"]:checked + .toggle-window {
+    display: block;
 }
 
 #intro {
